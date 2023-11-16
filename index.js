@@ -1,10 +1,54 @@
 var myPlayer;
+var myTimer;
 const asteroids = [];
 const speed = 3;
+const asteroidTime = 1000;
+const asteroidNum = 5;
+let milliseconds = 0;
+let seconds = 0;
+let minutes = 0;
+let currentBestTime;
 
 function startGame() {
-    myGameArea.start()
+    getCurrentBestTime();
+    myGameArea.start();
 }
+
+function getCurrentBestTime() {
+    if(localStorage.getItem('bestTime')) {
+        const time = localStorage.getItem('bestTime').split(":")
+        let m = time[0] < 10 ? "0" + time[0] : time[0];
+        let s = time[1] < 10 ? "0" + time[1] : time[1];
+        let ms = time[2] < 10 ? "00" + time[2] : time[2] < 100 ? "0" + time[2] : time[2];
+
+        currentBestTime = `${m}:${s}:${ms}`
+    } else {
+        currentBestTime = "00:00:000"
+    }
+}
+
+function displayTime() {
+    milliseconds += 10;
+    if(milliseconds == 1000) {
+        milliseconds = 0;
+        seconds += 1;
+        if(seconds == 60) {
+            seconds = 0;
+            minutes += 1;
+        }
+    }
+
+    let m = minutes < 10 ? "0" + minutes : minutes;
+    let s = seconds < 10 ? "0" + seconds : seconds;
+    let ms = milliseconds < 10 ? "00" + milliseconds : milliseconds < 100 ? "0" + milliseconds : milliseconds;
+
+    const ctx = myGameArea.context
+    ctx.fillStyle = "red"
+    ctx.font = "20px Georgia";
+    ctx.fillText(`Najbolje vrijeme: ${currentBestTime}`, myGameArea.canvas.width - 270, 30)
+    ctx.fillText(`Vrijeme: ${m}:${s}:${ms}`, myGameArea.canvas.width - 200, 60)
+}
+
 
 var myGameArea = {
     canvas: document.createElement("canvas"), 
@@ -17,29 +61,28 @@ var myGameArea = {
         this.frameNo = 0;
         myPlayer = new player(30, 30, this.canvas.width / 2, this.canvas.height / 2)
         myPlayer.draw();
-        this.interval = setInterval(updateGameArea, 20);
-        window.setInterval(() => {
-            let asteroidX;
-            const rand = Math.random();
-            if(rand <= 0.25) {
-                asteroidX = 10 * Math.random() + this.canvas.width;
-                asteroidY = Math.random() * this.canvas.height;
-            } else if(rand > 0.25 && rand <= 0.5){
-                asteroidX = -10 * Math.random();
-                asteroidY = Math.random() * this.canvas.height;
-            } else if(rand > 0.5 && rand <= 0.75) {
-                asteroidY = -10 * Math.random();
-                asteroidX = Math.random() * this.canvas.width;
-            } else {
-                asteroidY = 10 * Math.random() + this.canvas.height;
-                asteroidX = Math.random() * this.canvas.width;
-            }
-            const newAsteroid = new asteroid(60, 60, asteroidX, asteroidY, 5)
-            asteroids.push(newAsteroid)
-        }, 300)
+        this.interval = setInterval(updateGameArea, 10);
+        this.asteroidInterval = setInterval(createAsteroids, asteroidTime)
     },
     stop: function() {
         clearInterval(this.interval);
+        clearInterval(this.asteroidInterval);
+        if(localStorage.bestTime) {
+            const time = localStorage.getItem('bestTime').split(":")
+            if(time[0] < minutes) {
+                localStorage.setItem('bestTime', `${minutes}:${seconds}:${milliseconds}`)
+            } else if(time[0] == minutes) {
+                if(time[1] < seconds) {
+                    localStorage.setItem('bestTime', `${minutes}:${seconds}:${milliseconds}`)
+                } else if(time[1] == seconds) {
+                    if(time[2] < milliseconds) {
+                        localStorage.setItem('bestTime', `${minutes}:${seconds}:${milliseconds}`) 
+                    }
+                }
+            }
+        } else {
+            localStorage.setItem('bestTime', `${minutes}:${seconds}:${milliseconds}`)
+        }
     },
     clear: function() {
         this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
@@ -54,12 +97,10 @@ function player(width, height, x, y) {
 
     this.draw = function() {
         ctx = myGameArea.context;
-        ctx.save();
         ctx.shadowBlur = 20;
         ctx.shadowColor = "white";
         ctx.fillStyle = "red";
         ctx.fillRect(this.x - width / 2, this.y - height / 2, this.width, this.height);
-        ctx.restore();
     }
 
     this.update = function() {
@@ -119,6 +160,15 @@ function asteroid(maxHeight, maxWidth, x, y, maxSpeed) {
         this.y += this.speedY;
         this.draw();
     }
+
+    this.collision = function() {
+        let astLeft = (ast.x + ast.width) < myPlayer.x;
+        let astRight = ast.x > myPlayer.x + myPlayer.width;
+        let astAbove = (ast.y + ast.height) < myPlayer.y;
+        let astBelow = ast.y > (myPlayer.y + myPlayer.height);
+
+        return !(astLeft || astRight || astAbove || astBelow);
+    }
 }
 
 const keys = {
@@ -141,12 +191,42 @@ function updateGameArea() {
     myPlayer.update();
     for (ast of asteroids) {
         ast.update();
-        if(ast.x > 10 + myGameArea.canvas.width || ast.x < -10 || ast.y > 10 + myGameArea.canvas.height || ast.y < -10) {
+    }
+    for (ast of asteroids) {
+        if(ast.x > 50 + myGameArea.canvas.width || ast.x < -50 || ast.y > 50 + myGameArea.canvas.height || ast.y < -50) {
             const index = asteroids.indexOf(ast)
             asteroids.splice(index, 1)
         }
     }
+    displayTime();
+    for(ast of asteroids) {
+        if(ast.collision()) {
+            myGameArea.stop();
+            return;
+        }
+    }
+}
 
+function createAsteroids() {
+    for(let i = 0; i < asteroidNum; i++) {
+        let asteroidX;
+        const rand = Math.random();
+        if(rand <= 0.25) {
+            asteroidX = 10 * Math.random() + myGameArea.canvas.width;
+            asteroidY = Math.random() * myGameArea.canvas.height;
+        } else if(rand > 0.25 && rand <= 0.5){
+            asteroidX = -10 * Math.random();
+            asteroidY = Math.random() * myGameArea.canvas.height;
+        } else if(rand > 0.5 && rand <= 0.75) {
+            asteroidY = -10 * Math.random();
+            asteroidX = Math.random() * myGameArea.canvas.width;
+        } else {
+            asteroidY = 10 * Math.random() + myGameArea.canvas.height;
+            asteroidX = Math.random() * myGameArea.canvas.width;
+        }
+        const newAsteroid = new asteroid(60, 60, asteroidX, asteroidY, 5)
+        asteroids.push(newAsteroid)
+    }
 }
 
 window.addEventListener('keydown', (event) => {
