@@ -1,18 +1,18 @@
 let myPlayer;   
 let myTimer;    
 
-const asteroids = [];   // svi asteroidi koji trenutno postoje
-const speed = 3;    // brzina igrača
-const asteroidTime = 1000; // vrijeme učestalosti stvaranja asteroida
-const asteroidNum = 5;  // broj asteroida koji se stvaraju u jednom intervalu
-const maxAsteroids = 30;    // maksimalni broj asteroida
+const asteroids = [];       // Svi asteroidi koji trenutno postoje
+const speed = 3;            // Brzina igrača
+const asteroidTime = 1000;  // Vrijeme učestalosti stvaranja asteroida
+const asteroidNum = 5;      // Broj asteroida koji se stvaraju u jednom intervalu
+const maxAsteroids = 30;    // Maksimalni broj asteroida
 
-let milliseconds = 0;   // varijable za pohranu trenutnog vremena te najboljeg vremena
+let milliseconds = 0;       // Varijable za pohranu trenutnog vremena te najboljeg vremena
 let seconds = 0;
 let minutes = 0;
 let currentBestTime;
 
-const keys = {      // pohranjuje informaciju koja je tipka pritisnuta
+const keys = {      // Pohranjuje informaciju koja je tipka pritisnuta
     ArrowUp: {
         pressed: false
     },
