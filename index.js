@@ -162,10 +162,10 @@ function asteroid(maxHeight, maxWidth, x, y, maxSpeed) {
     }
 
     this.collision = function() {
-        let astLeft = (ast.x + ast.width) < myPlayer.x;
-        let astRight = ast.x > myPlayer.x + myPlayer.width;
-        let astAbove = (ast.y + ast.height) < myPlayer.y;
-        let astBelow = ast.y > (myPlayer.y + myPlayer.height);
+        let astLeft = (this.x + this.width) < (myPlayer.x - myPlayer.width / 2);
+        let astRight = this.x > (myPlayer.x + myPlayer.width / 2);
+        let astAbove = (this.y + this.height) < (myPlayer.y - myPlayer.width / 2);
+        let astBelow = this.y > (myPlayer.y + myPlayer.height / 2);
 
         return !(astLeft || astRight || astAbove || astBelow);
     }
